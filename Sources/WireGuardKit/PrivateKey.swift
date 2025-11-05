@@ -3,9 +3,7 @@
 
 import Foundation
 
-#if SWIFT_PACKAGE
 import WireGuardKitC
-#endif
 
 /// The class describing a private key used by WireGuard.
 public class PrivateKey: BaseKey {

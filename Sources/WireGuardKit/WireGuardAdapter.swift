@@ -4,10 +4,8 @@
 import Foundation
 import NetworkExtension
 
-#if SWIFT_PACKAGE
-import WireGuardKitGo
+import VpnFoundation
 import WireGuardKitC
-#endif
 
 public enum WireGuardAdapterError: Error {
     /// Failure to locate tunnel file descriptor.

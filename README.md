@@ -1,82 +1,93 @@
-# [WireGuard](https://www.wireguard.com/) for iOS and macOS
+# [WireGuard](https://www.wireguard.com/) and Xray for iOS and macOS
 
-This project contains an application for iOS and for macOS, as well as many components shared between the two of them. You may toggle between the two platforms by selecting the target from within Xcode.
+## What problem we're solving
 
-## Building
+Currently there is no way of integrating both WireGuard and Xray protocols together in iOS/macOS app using different libraries. The problem is – different Go runtimes conflicting with each other causing reference issues and Bad access fatal errors.
 
-- Clone this repo:
+Solution: Use of the same go runtime for both protocols.
 
-```
-$ git clone https://git.zx2c4.com/wireguard-apple
-$ cd wireguard-apple
-```
-
-- Rename and populate developer team ID file:
-
-```
-$ cp Sources/WireGuardApp/Config/Developer.xcconfig.template Sources/WireGuardApp/Config/Developer.xcconfig
-$ vim Sources/WireGuardApp/Config/Developer.xcconfig
-```
-
-- Install swiftlint and go 1.19:
-
-```
-$ brew install swiftlint go
-```
-
-- Open project in Xcode:
-
-```
-$ open WireGuard.xcodeproj
-```
-
-- Flip switches, press buttons, and make whirling noises until Xcode builds it.
-
-## WireGuardKit integration
+## VpnProtocolsKit integration
 
 1. Open your Xcode project and add the Swift package with the following URL:
    
    ```
-   https://git.zx2c4.com/wireguard-apple
+   https://github.com/SnowLukin/vpn-protocols-kit
    ```
    
-2. `WireGuardKit` links against `wireguard-go-bridge` library, but it cannot build it automatically
-   due to Swift package manager limitations. So it needs a little help from a developer. 
-   Please follow the instructions below to create a build target(s) for `wireguard-go-bridge`.
-   
-   - In Xcode, click File -> New -> Target. Switch to "Other" tab and choose "External Build 
-     System".
-   - Type in `WireGuardGoBridge<PLATFORM>` under the "Product name", replacing the `<PLATFORM>` 
-     placeholder with the name of the platform. For example, when targeting macOS use `macOS`, or 
-     when targeting iOS use `iOS`.
-     Make sure the build tool is set to: `/usr/bin/make` (default).
-   - In the appeared "Info" tab of a newly created target, type in the "Directory" path under 
-     the "External Build Tool Configuration":
-     
-     ```
-     ${BUILD_DIR%Build/*}SourcePackages/checkouts/wireguard-apple/Sources/WireGuardKitGo
-     ```
-     
-   - Switch to "Build Settings" and find `SDKROOT`.
-     Type in `macosx` if you target macOS, or type in `iphoneos` if you target iOS.
-   
-3. Go to Xcode project settings and locate your network extension target and switch to 
-   "Build Phases" tab.
-   
-   - Locate "Dependencies" section and hit "+" to add `WireGuardGoBridge<PLATFORM>` replacing 
-     the `<PLATFORM>` placeholder with the name of platform matching the network extension 
-     deployment target (i.e macOS or iOS).
-     
-   - Locate the "Link with binary libraries" section and hit "+" to add `WireGuardKit`.
-   
-4. In Xcode project settings, locate your main bundle app and switch to "Build Phases" tab. 
-   Locate the "Link with binary libraries" section and hit "+" to add `WireGuardKit`.
-   
-5. iOS only: Locate Bitcode settings under your application target, Build settings -> Enable Bitcode, 
-   change the corresponding value to "No".
-   
-Note that if you ship your app for both iOS and macOS, make sure to repeat the steps 2-4 twice, 
-once per platform.
+2. VpnFoundation will automatically fetched from GitHub releases.
+
+## VpnProtocolsKit integration for SPM
+
+1. In the `dependencies` array of your `Package.swift` file add the URL and version requirement of the package you want to integrate. For example:
+
+   ```swift
+   dependencies: [
+      .package(
+         url: "https://github.com/SnowLukin/vpn-protocols-kit.git", 
+         exact: "1.0.0" // use exact version to avoid conflicts with amenzia releases
+      ),
+   ],
+   ```
+2. In the `targets` section, add the imported package as a dependency of the target that needs it:
+
+   ```swift
+   targets: [
+      .target(
+         name: "YourTarget",
+         dependencies: ["XrayKit", "WireGuardKit"]
+      ),
+   ]
+   ```
+
+3. In your module use `import XrayKit` or `import WireGuardKit` depending on your needs
+
+## VpnFoundation Update Process
+
+Follow these steps to update VpnFoundation:
+
+1. Go to directory `Tools/xcframework_generation/` and start script:
+
+   ```bash
+    cd Tools/xcframework_generation
+    ./build.sh
+   ```
+   The script will remove all the previous .builds and .tmp folders and start building a new xcframework.
+   Xcframework will be created in .build folder alongside with zip.
+
+2. Get archive's checksum:
+
+   checksum can be seen in the end of `build.sh` script
+
+   E.g:
+   ```
+   b546dc09726f18ea8a59f3c8c3df94825694ff3d5163c477a9f381328f8059c5
+   ```
+
+3. Download ZIP-file from `.build/` dir. 
+
+   The you can:
+   - Integrate it locally in Package.swift
+   - Load it to GitHub releases
+
+   Examples:
+
+   **Local integration в Package.swift:**
+   ```swift
+   .binaryTarget(
+      name: "VpnFoundation",
+      path: "Tools/xcframework_generation/.build/WireGuardFoundation.xcframework"
+   )
+   ```
+
+   **Remote integration from GitHub release:**
+   ```swift
+   .binaryTarget(
+      name: "VpnFoundation",
+      url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/1.0.0/VpnFoundation.xcframework.zip",
+      checksum: "b546dc09726f18ea8a59f3c8c3df94825694ff3d5163c477a9f381328f8059c5"
+   )
+   ```
+
 
 ## MIT License
 

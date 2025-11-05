@@ -1,0 +1,5 @@
+module VpnFoundation {
+    umbrella header "vpnfoundation.h"
+    link "vpnfoundation-go"
+    export *
+}
