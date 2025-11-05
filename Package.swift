@@ -29,8 +29,15 @@ let package = Package(
             publicHeadersPath: "."
         ),
         .binaryTarget(
-            name: "VpnFoundation",
-            path: "Tools/xcframework_generation/.build/VpnFoundation.xcframework"
-        ),
+           name: "VpnFoundation",
+           url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/1.0.0/VpnFoundation.xcframework.zip",
+           checksum: "46e447508acbacbaf96f1a10c42d6ab3d0ad246f3737141b581254514ed2baf1"
+        )
+
+        // Local usage
+//        .binaryTarget(
+//            name: "VpnFoundation",
+//            path: "Tools/xcframework_generation/.build/VpnFoundation.xcframework"
+//        ),
     ]
 )
