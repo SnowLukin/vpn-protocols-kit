@@ -12,15 +12,23 @@ import (
 // Create Xray Run Request
 //
 //export LibXrayRunRequest
-func LibXrayRunRequest(datDir, configPath string) (string, error) {
-	return libXray.NewXrayRunRequest(datDir, configPath)
+func LibXrayRunRequest(datDir, configPath *C.char) *C.char {
+	result, err := libXray.NewXrayRunRequest(C.GoString(datDir), C.GoString(configPath))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(result)
 }
 
 // Create Xray Run From JSON Request
 //
 //export LibXrayRunFromJSONRequest
-func LibXrayRunFromJSONRequest(datDir, configJSON string) (string, error) {
-	return libXray.NewXrayRunFromJSONRequest(datDir, configJSON)
+func LibXrayRunFromJSONRequest(datDir, configJSON *C.char) *C.char {
+	result, err := libXray.NewXrayRunFromJSONRequest(C.GoString(datDir), C.GoString(configJSON))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(result)
 }
 
 // Run Xray instance.
@@ -29,15 +37,17 @@ func LibXrayRunFromJSONRequest(datDir, configJSON string) (string, error) {
 // maxMemory means the soft memory limit of golang, see SetMemoryLimit to find more information.
 //
 //export LibXrayRun
-func LibXrayRun(base64Text string) string {
-	return libXray.RunXray(base64Text)
+func LibXrayRun(base64Text *C.char) *C.char {
+	result := libXray.RunXray(C.GoString(base64Text))
+	return C.CString(result)
 }
 
 // Run Xray instance with JSON configuration
 //
 //export LibXrayRunFromJSON
-func LibXrayRunFromJSON(base64Text string) string {
-	return libXray.RunXrayFromJSON(base64Text)
+func LibXrayRunFromJSON(base64Text *C.char) *C.char {
+	result := libXray.RunXrayFromJSON(C.GoString(base64Text))
+	return C.CString(result)
 }
 
 // Stop Xray instance.
