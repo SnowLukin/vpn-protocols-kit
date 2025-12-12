@@ -5,44 +5,39 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	libXray "github.com/xtls/libxray"
 	libxray "github.com/xtls/libxray"
 )
+
+// Create Xray Run Request
+//
+//export LibXrayRunRequest
+func LibXrayRunRequest(datDir, configPath string) (string, error) {
+	return libXray.NewXrayRunRequest(datDir, configPath)
+}
+
+// Create Xray Run From JSON Request
+//
+//export LibXrayRunFromJSONRequest
+func LibXrayRunFromJSONRequest(datDir, configJSON string) (string, error) {
+	return libXray.NewXrayRunFromJSONRequest(datDir, configJSON)
+}
 
 // Run Xray instance.
 // datDir means the dir which geosite.dat and geoip.dat are in.
 // configPath means the config.json file path.
 // maxMemory means the soft memory limit of golang, see SetMemoryLimit to find more information.
 //
-//export LibXrayRunXray
-func LibXrayRunXray(datDir, configPath *C.char, maxMemory int64) *C.char {
-	request := libxray.RunXrayRequest{
-		DatDir:     C.GoString(datDir),
-		ConfigPath: C.GoString(configPath),
-	}
-	requestBytes, err := json.Marshal(&request)
-	if err != nil {
-		return C.CString(err.Error())
-	}
-	base64Text := base64.StdEncoding.EncodeToString(requestBytes)
-	result := libxray.RunXray(base64Text)
-	return C.CString(result)
+//export LibXrayRun
+func LibXrayRun(base64Text string) string {
+	return libXray.RunXray(base64Text)
 }
 
 // Run Xray instance with JSON configuration
 //
-//export LibXrayRunXrayFromJSON
-func LibXrayRunXrayFromJSON(datDir, configJSON *C.char) *C.char {
-	request := libxray.RunXrayFromJSONRequest{
-		DatDir:     C.GoString(datDir),
-		ConfigJSON: C.GoString(configJSON),
-	}
-	requestBytes, err := json.Marshal(&request)
-	if err != nil {
-		return C.CString(err.Error())
-	}
-	base64Text := base64.StdEncoding.EncodeToString(requestBytes)
-	result := libxray.RunXrayFromJSON(base64Text)
-	return C.CString(result)
+//export LibXrayRunFromJSON
+func LibXrayRunFromJSON(base64Text string) string {
+	return libXray.RunXrayFromJSON(base64Text)
 }
 
 // Stop Xray instance.

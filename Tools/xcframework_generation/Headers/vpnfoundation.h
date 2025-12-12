@@ -15,8 +15,10 @@ extern void wgBumpSockets(int handle);
 extern void wgDisableSomeRoamingForBrokenMobileSemantics(int handle);
 extern const char *wgVersion();
 
-extern char *LibXrayRunXray(const char *datDir, const char *configPath, int64_t maxMemory);
-extern char *LibXrayRunXrayFromJSON(const char *datDir, const char *configPath);
+extern char *LibXrayRunRequest(const char *datDir, const char *configPath);
+extern char *LibXrayRunFromJSONRequest(const char *datDir, const char *configJSON);
+extern char *LibXrayRun(const char *base64Text);
+extern char *LibXrayRunFromJSON(const char *base64Text);
 extern char *LibXrayStopXray();
 extern char *LibXrayXrayVersion();
 extern int LibXrayGetXrayState();

@@ -54,8 +54,16 @@ public actor XrayProvider: XrayProviding {
     }
 
     public func start(config: String, datDir: String) throws {
-        let result = LibXrayRunXrayFromJSON(datDir, config)
-        let resultString = result.map { String(cString: $0) }
+        guard let request = LibXrayRunFromJSONRequest(datDir, config) else {
+            throw XrayError.callFailed(message: "Failed to create request")
+        }
+        let requestString = String(cString: request)
+        try unwrapBase64Response(requestString)
+
+        guard let result = LibXrayRunFromJSON(requestString) else {
+            throw XrayError.callFailed(message: "Failed to run Xray")
+        }
+        let resultString = String(cString: result)
         try unwrapBase64Response(resultString)
     }
 
