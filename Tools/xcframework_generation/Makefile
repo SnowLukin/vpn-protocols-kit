@@ -32,6 +32,8 @@ MACOS_DESTDIR ?= $(MACOS_CONFIGURATION_BUILD_DIR)
 IOS_DESTDIR ?= $(IOS_CONFIGURATION_BUILD_DIR)
 IOS_SIM_DESTDIR ?= $(IOS_SIM_CONFIGURATION_BUILD_DIR)
 BUILDDIR ?= $(CONFIGURATION_TEMP_DIR)/vpnfoundation-go-bridge
+HEV_SOCKS5_DIR ?= $(CURDIR)/submodules/hev-socks5-tunnel
+HEV_SOCKS5_BUILDDIR ?= $(CONFIGURATION_TEMP_DIR)/hev-socks5-tunnel
 
 MACOS_CFLAGS_PREFIX := -mmacosx-version-min=$(MACOS_DEPLOYMENT_TARGET) -isysroot $(MACOS_SDKROOT) -arch
 IOS_CFLAGS_PREFIX := -miphoneos-version-min=$(IOS_DEPLOYMENT_TARGET) -isysroot $(IOS_SDKROOT) -arch
@@ -48,7 +50,9 @@ macos-version-header: $(MACOS_DESTDIR)/wireguard-go-version.h
 ios-version-header: $(IOS_DESTDIR)/wireguard-go-version.h $(IOS_SIM_DESTDIR)/wireguard-go-version.h
 macos-build: $(MACOS_DESTDIR)/libvpnfoundation-go.a macos-version-header
 ios-build: $(IOS_DESTDIR)/libvpnfoundation-go.a $(IOS_SIM_DESTDIR)/libvpnfoundation-go.a ios-version-header
-build: macos-build ios-build
+hev-socks5-macos-build: $(MACOS_DESTDIR)/libhev-socks5-tunnel.a
+hev-socks5-ios-build: $(IOS_DESTDIR)/libhev-socks5-tunnel.a $(IOS_SIM_DESTDIR)/libhev-socks5-tunnel.a
+build: macos-build ios-build hev-socks5-macos-build hev-socks5-ios-build
 build-xcframework: $(XCFRAMEWORK_NAME)
 
 REAL_GOROOT := $(shell go env GOROOT 2>/dev/null)
@@ -89,6 +93,43 @@ $(foreach ARCH,$(IOS_ARCHS),$(eval $(call libvpnfoundation-go-a,$(ARCH),$(IOS_CF
 $(foreach ARCH,$(IOS_SIM_ARCHS),$(eval $(call libvpnfoundation-go-a,$(ARCH),$(IOS_SIM_CFLAGS_PREFIX),$(IOS_SIM_PLATFORM_NAME))))
 
 
+# -- HEV-SOCKS5-TUNNEL BUILDING
+
+# ARCH-$(1) CFLAGS-$(2) PLATFORM_NAME-$(3)
+define libhev-socks5-a
+$(HEV_SOCKS5_BUILDDIR)/libhev-socks5-tunnel-$(3)-$(1).a:
+	@echo "🔵🔵🔵🔵🔵 building hev-socks5-tunnel $(3) $(1) 🔵🔵🔵🔵🔵"
+	@mkdir -p "$(HEV_SOCKS5_BUILDDIR)"
+	@echo "Building third-party dependencies..."
+	cd "$(HEV_SOCKS5_DIR)" && \
+		$(MAKE) PP="xcrun --sdk $(3) --toolchain $(3) clang" \
+			CC="xcrun --sdk $(3) --toolchain $(3) clang" \
+			AR="xcrun ar" \
+			CFLAGS="-arch $(1) $(2)" \
+			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" tp-static
+	@echo "Building hev-socks5-tunnel..."
+	cd "$(HEV_SOCKS5_DIR)" && \
+		$(MAKE) PP="xcrun --sdk $(3) --toolchain $(3) clang" \
+			CC="xcrun --sdk $(3) --toolchain $(3) clang" \
+			AR="xcrun ar" \
+			CFLAGS="-arch $(1) $(2)" \
+			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" static
+	@mkdir -p "$$(dir $$@)"
+	libtool -static -o "$$@" \
+		"$(HEV_SOCKS5_DIR)/bin/libhev-socks5-tunnel.a" \
+		"$(HEV_SOCKS5_DIR)/third-part/lwip/bin/liblwip.a" \
+		"$(HEV_SOCKS5_DIR)/third-part/yaml/bin/libyaml.a" \
+		"$(HEV_SOCKS5_DIR)/third-part/hev-task-system/bin/libhev-task-system.a"
+	cd "$(HEV_SOCKS5_DIR)" && $(MAKE) clean
+endef
+
+$(eval $(call libhev-socks5-a,arm64,-mmacosx-version-min=$(MACOS_DEPLOYMENT_TARGET),$(MACOS_PLATFORM_NAME)))
+$(eval $(call libhev-socks5-a,x86_64,-mmacosx-version-min=$(MACOS_DEPLOYMENT_TARGET),$(MACOS_PLATFORM_NAME)))
+$(eval $(call libhev-socks5-a,arm64,-miphoneos-version-min=$(IOS_DEPLOYMENT_TARGET),$(IOS_PLATFORM_NAME)))
+$(eval $(call libhev-socks5-a,arm64,-mios-simulator-version-min=$(IOS_DEPLOYMENT_TARGET),$(IOS_SIM_PLATFORM_NAME)))
+$(eval $(call libhev-socks5-a,x86_64,-mios-simulator-version-min=$(IOS_DEPLOYMENT_TARGET),$(IOS_SIM_PLATFORM_NAME)))
+
+
 # -- HEADERS STUFF
 
 define version-header-rule
@@ -114,31 +155,73 @@ $(eval $(call linkinator,$(MACOS_DESTDIR),$(MACOS_ARCHS),$(MACOS_PLATFORM_NAME))
 $(eval $(call linkinator,$(IOS_DESTDIR),$(IOS_ARCHS),$(IOS_PLATFORM_NAME)))
 $(eval $(call linkinator,$(IOS_SIM_DESTDIR),$(IOS_SIM_ARCHS),$(IOS_SIM_PLATFORM_NAME)))
 
+# -- HEV-SOCKS5-TUNNEL LINKING
+
+# DESTDIR: $(1) ARCHS: $(2) PLATFORM_NAME: $(3)
+define hev-linkinator
+$(1)/libhev-socks5-tunnel.a: $(foreach ARCH,$(2),$(HEV_SOCKS5_BUILDDIR)/libhev-socks5-tunnel-$(3)-$(ARCH).a)
+	@mkdir -vp "$(1)"
+	$(LIPO) -create -output "$$@" $$^
+endef
+
+$(eval $(call hev-linkinator,$(MACOS_DESTDIR),$(MACOS_ARCHS),$(MACOS_PLATFORM_NAME)))
+$(eval $(call hev-linkinator,$(IOS_DESTDIR),$(IOS_ARCHS),$(IOS_PLATFORM_NAME)))
+$(eval $(call hev-linkinator,$(IOS_SIM_DESTDIR),$(IOS_SIM_ARCHS),$(IOS_SIM_PLATFORM_NAME)))
+
+# -- MERGE BOTH LIBRARIES
+
+# DESTDIR: $(1)
+define merge-libraries
+$(1)/libvpnfoundation-combined.a: $(1)/libvpnfoundation-go.a $(1)/libhev-socks5-tunnel.a
+	@echo "🔗 Merging libraries for $(1)"
+	libtool -static -o "$$@" "$(1)/libvpnfoundation-go.a" "$(1)/libhev-socks5-tunnel.a"
+endef
+
+$(eval $(call merge-libraries,$(MACOS_DESTDIR)))
+$(eval $(call merge-libraries,$(IOS_DESTDIR)))
+$(eval $(call merge-libraries,$(IOS_SIM_DESTDIR)))
+
 
 # -- XCFRAMEWORK COMPILING
 
-$(XCFRAMEWORK_NAME): build ios-version-header macos-version-header
+$(XCFRAMEWORK_NAME): $(MACOS_DESTDIR)/libvpnfoundation-combined.a $(IOS_DESTDIR)/libvpnfoundation-combined.a $(IOS_SIM_DESTDIR)/libvpnfoundation-combined.a ios-version-header macos-version-header
 	@mkdir -p "$(CONFIGURATION_BUILD_DIR)"
 	rm -rf "$(XCFRAMEWORK_NAME)"
 
 	# Create temporary directory for headers
 	@mkdir -p "$(BUILDDIR)/headers-temp"
 
-	# Copy original headers
+	# Copy VpnFoundation headers
 	cp Headers/vpnfoundation.h "$(BUILDDIR)/headers-temp/vpnfoundation.h"
 
 	# Add WireGuard version
 	cat "$(IOS_DESTDIR)/wireguard-go-version.h" >> "$(BUILDDIR)/headers-temp/vpnfoundation.h"
 
-	# Copy modulemap
-	cp Headers/module.modulemap "$(BUILDDIR)/headers-temp/module.modulemap"
+	# Copy HevSocks5Tunnel header
+	cp "$(HEV_SOCKS5_DIR)/src/hev-main.h" "$(BUILDDIR)/headers-temp/hev-main.h"
+
+	# Create unified modulemap with submodules
+	@echo "Creating unified module.modulemap..."
+	@echo "module VpnFoundation {" > "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "    explicit module VpnFoundationCore {" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        header \"vpnfoundation.h\"" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        link \"vpnfoundation-combined\"" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        export *" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "    }" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "    explicit module HevSocks5Tunnel {" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        header \"hev-main.h\"" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        link \"vpnfoundation-combined\"" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "        export *" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "    }" >> "$(BUILDDIR)/headers-temp/module.modulemap"
+	@echo "}" >> "$(BUILDDIR)/headers-temp/module.modulemap"
 
 	xcrun xcodebuild -create-xcframework \
-		-library $(IOS_DESTDIR)/libvpnfoundation-go.a \
+		-library $(IOS_DESTDIR)/libvpnfoundation-combined.a \
 		-headers "$(BUILDDIR)/headers-temp" \
-		-library $(IOS_SIM_DESTDIR)/libvpnfoundation-go.a \
+		-library $(IOS_SIM_DESTDIR)/libvpnfoundation-combined.a \
 		-headers "$(BUILDDIR)/headers-temp" \
-		-library $(MACOS_DESTDIR)/libvpnfoundation-go.a \
+		-library $(MACOS_DESTDIR)/libvpnfoundation-combined.a \
 		-headers "$(BUILDDIR)/headers-temp" \
 		-output "$(XCFRAMEWORK_BASENAME).xcframework"
 
@@ -169,7 +252,9 @@ clean-temp:
 	$(call clean-output,$(BUILDDIR),$(IOS_SIM_DESTDIR))
 	rm -rf "$(CONFIGURATION_TEMP_DIR)"
 	rm -rf "$(BUILDDIR)/headers-temp"
+	rm -rf "$(HEV_SOCKS5_BUILDDIR)"
 	rm -f Headers/vpnfoundation.h.tmp
+	cd "$(HEV_SOCKS5_DIR)" && $(MAKE) clean || true
 
 clean:
 	$(call clean-output,$(BUILDDIR),$(MACOS_DESTDIR))
@@ -177,9 +262,11 @@ clean:
 	$(call clean-output,$(BUILDDIR),$(IOS_SIM_DESTDIR))
 	rm -rf "$(CONFIGURATION_TEMP_DIR)"
 	rm -rf "$(BUILDDIR)/headers-temp"
+	rm -rf "$(HEV_SOCKS5_BUILDDIR)"
 	rm -f Headers/vpnfoundation.h.tmp
 	rm -rf "$(CONFIGURATION_BUILD_DIR)"
 	rm -f "$(XCFRAMEWORK_BASENAME).xcframework.zip"
+	cd "$(HEV_SOCKS5_DIR)" && $(MAKE) clean || true
 
 install-macos: macos-build
 install-ios: ios-build

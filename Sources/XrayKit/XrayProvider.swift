@@ -1,7 +1,7 @@
 // Created by Denis Mandych on 04.11.2025
 
 import Foundation
-import VpnFoundation
+import VpnFoundation.VpnFoundationCore
 
 public protocol XrayProviding: Actor {
     nonisolated var isRunning: Bool { get }
