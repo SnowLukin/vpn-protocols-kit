@@ -11,7 +11,8 @@ let package = Package(
     ],
     products: [
         .library(name: "XrayKit", targets: ["XrayKit"]),
-        .library(name: "WireGuardKit", targets: ["WireGuardKit"])
+        .library(name: "WireGuardKit", targets: ["WireGuardKit"]),
+        .library(name: "Tun2SocksKit", targets: ["Tun2SocksKit"]),
     ],
     dependencies: [],
     targets: [
@@ -28,16 +29,21 @@ let package = Package(
             dependencies: [],
             publicHeadersPath: "."
         ),
-        .binaryTarget(
-           name: "VpnFoundation",
-           url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/1.0.0/VpnFoundation.xcframework.zip",
-           checksum: "46e447508acbacbaf96f1a10c42d6ab3d0ad246f3737141b581254514ed2baf1"
-        )
+        .target(
+            name: "Tun2SocksKit",
+            dependencies: ["VpnFoundation", "WireGuardKitC"]
+        ),
+        // Remote usage
+       .binaryTarget(
+          name: "VpnFoundation",
+          url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/2.0.0/VpnFoundation.xcframework.zip",
+          checksum: "538584d2f9cb1818ce62674ee74287a106d5933c1b55f3477c6144b0a12ff419"
+       )
 
         // Local usage
-//        .binaryTarget(
-//            name: "VpnFoundation",
-//            path: "Tools/xcframework_generation/.build/VpnFoundation.xcframework"
-//        ),
+        // .binaryTarget(
+        //     name: "VpnFoundation",
+        //     path: "Tools/xcframework_generation/.build/VpnFoundation.xcframework"
+        // ),
     ]
 )

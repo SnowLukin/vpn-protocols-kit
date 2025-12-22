@@ -4,7 +4,7 @@
 import Foundation
 import NetworkExtension
 
-import VpnFoundation
+import VpnFoundation.VpnFoundationCore
 import WireGuardKitC
 
 public enum WireGuardAdapterError: Error {
