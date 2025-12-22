@@ -1,5 +1,13 @@
 module VpnFoundation {
-    umbrella header "vpnfoundation.h"
-    link "vpnfoundation-go"
-    export *
+    explicit module VpnFoundationCore {
+        header "vpnfoundation.h"
+        link "vpnfoundation-combined"
+        export *
+    }
+
+    explicit module HevSocks5Tunnel {
+        header "hev-main.h"
+        link "vpnfoundation-combined"
+        export *
+    }
 }
