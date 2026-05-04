@@ -146,3 +146,4 @@ jobs:
           echo "- Asset: $ZIP_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "- SHA-256: \`${{ steps.checksum.outputs.sha256 }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> "$GITHUB_STEP_SUMMARY"
+
