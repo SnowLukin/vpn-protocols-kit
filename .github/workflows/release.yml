@@ -1,0 +1,149 @@
+name: Release VpnFoundation xcframework
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 2.0.2). Without leading v.'
+        required: true
+        type: string
+      target_branch:
+        description: 'Branch to release from. Defaults to current branch.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+      ZIP_NAME: VpnFoundation.xcframework.zip
+      ZIP_PATH: Tools/xcframework_generation/.build/VpnFoundation.xcframework.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch || github.ref }}
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app
+          xcodebuild -version
+
+      - name: Verify version doesn't already exist
+        run: |
+          if gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "::error::Release $VERSION already exists. Bump the version or delete the existing release."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build xcframework
+        run: bash Tools/xcframework_generation/build.sh
+
+      - name: Verify build artifact exists
+        run: |
+          test -f "$ZIP_PATH" || { echo "::error::Build artifact not found at $ZIP_PATH"; exit 1; }
+          ls -lh "$ZIP_PATH"
+
+      - name: Compute checksum
+        id: checksum
+        run: |
+          CHECKSUM=$(shasum -a 256 "$ZIP_PATH" | cut -d' ' -f1)
+          echo "sha256=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "Computed checksum: $CHECKSUM"
+
+      - name: Update Package.swift with release URL and checksum
+        run: |
+          NEW_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/$ZIP_NAME"
+          NEW_SHA="${{ steps.checksum.outputs.sha256 }}"
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+
+          path = "Package.swift"
+          with open(path, "r", encoding="utf-8") as f:
+              content = f.read()
+
+          new_url = os.environ["NEW_URL"]
+          new_sha = os.environ["NEW_SHA"]
+
+          # Match the binaryTarget url: ... and checksum: ... lines for VpnFoundation
+          pattern = re.compile(
+              r'(\.binaryTarget\(\s*name:\s*"VpnFoundation",\s*url:\s*")[^"]+(",\s*checksum:\s*")[^"]+(")',
+              re.MULTILINE,
+          )
+          new_content, n = pattern.subn(
+              lambda m: f"{m.group(1)}{new_url}{m.group(2)}{new_sha}{m.group(3)}",
+              content,
+          )
+          if n != 1:
+              sys.stderr.write(f"::error::Expected exactly 1 binaryTarget block to replace, found {n}\n")
+              sys.exit(1)
+
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(new_content)
+          print(f"Package.swift updated: url={new_url}, checksum={new_sha}")
+          PY
+        env:
+          NEW_URL: https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/${{ env.ZIP_NAME }}
+          NEW_SHA: ${{ steps.checksum.outputs.sha256 }}
+
+      - name: Show Package.swift diff
+        run: git diff -- Package.swift
+
+      - name: Commit Package.swift update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Package.swift
+          if git diff --cached --quiet; then
+            echo "::notice::Package.swift already at target URL/checksum, skipping commit."
+          else
+            git commit -m "ci: update Package.swift for release $VERSION"
+          fi
+
+      - name: Push branch update
+        run: |
+          BRANCH="${{ github.event.inputs.target_branch || github.ref_name }}"
+          git push origin "HEAD:$BRANCH"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Create release with xcframework asset
+        run: |
+          gh release create "$VERSION" \
+            --repo "${{ github.repository }}" \
+            --target "$RELEASE_SHA" \
+            --title "$VERSION" \
+            --notes-start-tag "$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name 2>/dev/null || echo '')" \
+            --generate-notes \
+            "$ZIP_PATH"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "### Released $VERSION :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tag: \`$VERSION\` (commit \`$RELEASE_SHA\`)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Asset: $ZIP_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SHA-256: \`${{ steps.checksum.outputs.sha256 }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> "$GITHUB_STEP_SUMMARY"
+
