@@ -75,7 +75,7 @@ func LibXrayGetXrayState() C.int {
 //
 //export LibXrayTestXray
 func LibXrayTestXray(datDir, configPath *C.char) *C.char {
-	request := libxray.TestXrayRequest{
+	request := libxray.RunXrayRequest{
 		DatDir:     C.GoString(datDir),
 		ConfigPath: C.GoString(configPath),
 	}
