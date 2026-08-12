@@ -46,3 +46,6 @@ output
 
 # Vim
 .*.sw*
+
+# go build output from Tools/xcframework_generation
+Tools/xcframework_generation/vpn_protocols-kit

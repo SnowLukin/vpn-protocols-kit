@@ -109,15 +109,6 @@ func LibXrayPing(datDir, configPath *C.char, timeout C.int, url, proxy *C.char) 
 	return C.CString(result)
 }
 
-// Query inbound and outbound stats
-//
-//export LibXrayQueryStats
-func LibXrayQueryStats(server *C.char) *C.char {
-	base64Text := base64.StdEncoding.EncodeToString([]byte(C.GoString(server)))
-	result := libxray.QueryStats(base64Text)
-	return C.CString(result)
-}
-
 // Count geo data
 //
 //export LibXrayCountGeoData
