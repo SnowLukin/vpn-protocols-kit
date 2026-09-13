@@ -24,7 +24,7 @@ public protocol Socks5TunnelProviding: Actor {
     ) throws
     nonisolated func logHistoryState() -> String?
     func start(with config: Socks5Config) throws
-    func stop()
+    func stop() async
     func statistics() -> SocksTunStats
 }
 
@@ -109,10 +109,12 @@ public actor Socks5TunnelProvider: Socks5TunnelProviding {
         // TODO: Handle exit code
     }
 
-    public func stop() {
+    public func stop() async {
         hev_socks5_tunnel_quit()
-        workerTask?.cancel()
-        workerTask = nil
+        guard let workerTask else { return }
+        workerTask.cancel()
+        _ = await workerTask.value
+        self.workerTask = nil
     }
 
     public func statistics() -> SocksTunStats {
