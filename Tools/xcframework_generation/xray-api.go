@@ -5,8 +5,49 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/SnowLukin/vpn_protocols-kit/internal/loghistory"
 	libxray "github.com/xtls/libxray"
 )
+
+var xrayLogHistory loghistory.Manager
+
+func init() {
+	if err := xrayLogHistory.Register(); err != nil {
+		panic(err)
+	}
+}
+
+//export LibXrayConfigureLogHistory
+func LibXrayConfigureLogHistory(configJSON *C.char) C.int {
+	raw := C.GoString(configJSON)
+	if raw == "" {
+		if xrayLogHistory.Configure(nil) != nil {
+			return -1
+		}
+		return 0
+	}
+	if len(raw) > 8192 {
+		return -1
+	}
+	var config loghistory.Config
+	if json.Unmarshal([]byte(raw), &config) != nil || xrayLogHistory.Configure(&config) != nil {
+		return -1
+	}
+	return 0
+}
+
+//export LibXrayGetLogHistoryState
+func LibXrayGetLogHistoryState() *C.char {
+	state := xrayLogHistory.State()
+	if state == nil {
+		return nil
+	}
+	data, err := json.Marshal(state)
+	if err != nil {
+		return nil
+	}
+	return C.CString(string(data))
+}
 
 // Run Xray instance.
 // datDir means the dir which geosite.dat and geoip.dat are in.

@@ -24,5 +24,7 @@ extern char *LibXrayTestXray(const char *datDir, const char *configPath);
 extern char *LibXrayPing(const char *datDir, const char *configPath, int timeout, const char *url, const char *proxy);
 extern char *LibXrayCountGeoData(const char *datDir, const char *name, const char *geoType);
 extern char *LibXrayReadGeoFiles(const char *data);
+extern int LibXrayConfigureLogHistory(const char *configJSON);
+extern char *LibXrayGetLogHistoryState(void);
 
 #endif

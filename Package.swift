@@ -33,6 +33,10 @@ let package = Package(
             name: "Tun2SocksKit",
             dependencies: ["VpnFoundation", "WireGuardKitC"]
         ),
+        .testTarget(
+            name: "Tun2SocksKitTests",
+            dependencies: ["Tun2SocksKit"]
+        ),
         // Remote usage
        .binaryTarget(
           name: "VpnFoundation",
