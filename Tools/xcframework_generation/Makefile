@@ -199,6 +199,7 @@ $(XCFRAMEWORK_NAME): $(MACOS_DESTDIR)/libvpnfoundation-combined.a $(IOS_DESTDIR)
 
 	# Copy HevSocks5Tunnel header
 	cp "$(HEV_SOCKS5_DIR)/src/hev-main.h" "$(BUILDDIR)/headers-temp/hev-main.h"
+	cp "$(HEV_SOCKS5_DIR)/src/core/include/hev-socks5-log-history.h" "$(BUILDDIR)/headers-temp/hev-socks5-log-history.h"
 
 	# Create unified modulemap with submodules
 	@echo "Creating unified module.modulemap..."

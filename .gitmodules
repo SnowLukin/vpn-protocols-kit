@@ -1,4 +1,4 @@
 [submodule "Tools/xcframework_generation/submodules/hev-socks5-tunnel"]
 	path = Tools/xcframework_generation/submodules/hev-socks5-tunnel
-	url = https://github.com/heiher/hev-socks5-tunnel
+	url = https://github.com/SnowLukin/hev-socks5-tunnel.git
 	branch = main
