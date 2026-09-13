@@ -182,3 +182,36 @@ func TestOversizedEventIsExplicitAndBounded(t *testing.T) {
 		t.Fatal("oversized event silently changed or lost")
 	}
 }
+
+func TestFailedCleanupDoesNotLeaveAnExtraPart(t *testing.T) {
+	cfg := testConfig(t)
+	w, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	event := Event{Timestamp: time.Unix(100, 0), Level: "info", Message: strings.Repeat("x", 240)}
+	for i := 0; i < 4; i++ {
+		if err := w.Write(event); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first := filepath.Join(cfg.Directory, "xray-core.00000000000000000001.jsonl")
+	backup := filepath.Join(cfg.Directory, "blocked-data")
+	if err := os.Rename(first, backup); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(first, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(backup, filepath.Join(first, "held")); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Write(event); err == nil {
+		t.Fatal("cleanup fault was hidden")
+	}
+	fifth := filepath.Join(cfg.Directory, "xray-core.00000000000000000005.jsonl")
+	if _, err := os.Stat(fifth); !os.IsNotExist(err) {
+		t.Fatal("failed cleanup left a fifth part")
+	}
+}

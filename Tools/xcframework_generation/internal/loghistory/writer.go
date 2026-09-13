@@ -220,6 +220,12 @@ func (w *Writer) openNext() error {
 	if w.sequence == ^uint64(0) {
 		return errors.New("log_history_sequence_exhausted")
 	}
+	for len(w.parts) >= w.config.Policy.MaxSegments {
+		if err := os.Remove(w.parts[0].path); err != nil {
+			return err
+		}
+		w.parts = w.parts[1:]
+	}
 	w.sequence++
 	path := filepath.Join(w.config.Directory, fmt.Sprintf("%s.%020d.jsonl", stem, w.sequence))
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
