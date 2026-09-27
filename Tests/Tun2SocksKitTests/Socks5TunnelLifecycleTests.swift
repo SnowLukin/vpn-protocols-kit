@@ -76,20 +76,6 @@ final class Socks5TunnelLifecycleTests: XCTestCase {
         await assertReturns { await self.provider.stop() }
     }
 
-    func testStartWhileRunningFails() async throws {
-        try await startValid()
-
-        do {
-            try await provider.start(with: .string(content: Self.validConfig)) { _ in }
-            XCTFail("Expected the second start to fail")
-        } catch {
-            guard case .failedToStartSocks5Tunnel = error else {
-                return XCTFail("Unexpected error: \(error)")
-            }
-        }
-        await assertReturns { await self.provider.stop() }
-    }
-
     func testStartAfterStopWithoutWorkerRunsHev() async throws {
         await assertReturns { await self.provider.stop() }
 
@@ -97,13 +83,22 @@ final class Socks5TunnelLifecycleTests: XCTestCase {
         await assertReturns { await self.provider.stop() }
     }
 
-    /// Starts hev and gives it time to finish initialization.
+    /// Starts hev, gives it time to finish initialization and checks that its worker is still running.
     @discardableResult
     private func startValid() async throws -> LockedValue<Bool> {
         let unexpectedExit = LockedValue(false)
         try await provider.start(with: .string(content: Self.validConfig)) { _ in unexpectedExit.set(true) }
         try await Task.sleep(nanoseconds: 300_000_000)
         XCTAssertFalse(unexpectedExit.get())
+        do {
+            try await provider.start(with: .string(content: Self.validConfig)) { _ in }
+            XCTFail("Expected a running worker to reject another start")
+        } catch {
+            guard case .failedToStartSocks5Tunnel = error else {
+                XCTFail("Unexpected error: \(error)")
+                return unexpectedExit
+            }
+        }
         return unexpectedExit
     }
 
