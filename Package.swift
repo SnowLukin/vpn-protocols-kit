@@ -33,11 +33,15 @@ let package = Package(
             name: "Tun2SocksKit",
             dependencies: ["VpnFoundation", "WireGuardKitC"]
         ),
+        .testTarget(
+            name: "Tun2SocksKitTests",
+            dependencies: ["Tun2SocksKit"]
+        ),
         // Remote usage
        .binaryTarget(
           name: "VpnFoundation",
-          url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/2.2.0/VpnFoundation.xcframework.zip",
-          checksum: "3a8a3a9ee5b19f11eff2d32901fb13e3da7d45cf6b6623fc211dec4b0ec3d8ae"
+          url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/2.3.0-beta.3/VpnFoundation.xcframework.zip",
+          checksum: "b57dbfd374bc11562ee3e8550ea2c61e854bfaf59780597057ab4723c8a4f96f"
        )
 
         // Local usage
