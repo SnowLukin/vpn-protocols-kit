@@ -34,6 +34,10 @@ IOS_SIM_DESTDIR ?= $(IOS_SIM_CONFIGURATION_BUILD_DIR)
 BUILDDIR ?= $(CONFIGURATION_TEMP_DIR)/vpnfoundation-go-bridge
 HEV_SOCKS5_DIR ?= $(CURDIR)/submodules/hev-socks5-tunnel
 HEV_SOCKS5_BUILDDIR ?= $(CONFIGURATION_TEMP_DIR)/hev-socks5-tunnel
+# hev's stack overflow detector installs a process-wide SIGSEGV/SIGBUS handler.
+# A fault on a Go thread re-faults inside it with the signal blocked, and the
+# process spins at 100% CPU instead of crashing or letting Go recover.
+HEV_SOCKS5_TPFLAGS ?= ENABLE_STACK_OVERFLOW_DETECTOR=0
 
 MACOS_CFLAGS_PREFIX := -mmacosx-version-min=$(MACOS_DEPLOYMENT_TARGET) -isysroot $(MACOS_SDKROOT) -arch
 IOS_CFLAGS_PREFIX := -miphoneos-version-min=$(IOS_DEPLOYMENT_TARGET) -isysroot $(IOS_SDKROOT) -arch
@@ -106,14 +110,16 @@ $(HEV_SOCKS5_BUILDDIR)/libhev-socks5-tunnel-$(3)-$(1).a:
 			CC="xcrun --sdk $(3) --toolchain $(3) clang" \
 			AR="xcrun ar" \
 			CFLAGS="-arch $(1) $(2)" \
-			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" tp-static
+			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" \
+			TPFLAGS="$(HEV_SOCKS5_TPFLAGS)" tp-static
 	@echo "Building hev-socks5-tunnel..."
 	cd "$(HEV_SOCKS5_DIR)" && \
 		$(MAKE) PP="xcrun --sdk $(3) --toolchain $(3) clang" \
 			CC="xcrun --sdk $(3) --toolchain $(3) clang" \
 			AR="xcrun ar" \
 			CFLAGS="-arch $(1) $(2)" \
-			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" static
+			LFLAGS="-arch $(1) $(2) -Wl,-Bsymbolic-functions" \
+			TPFLAGS="$(HEV_SOCKS5_TPFLAGS)" static
 	@mkdir -p "$$(dir $$@)"
 	libtool -static -o "$$@" \
 		"$(HEV_SOCKS5_DIR)/bin/libhev-socks5-tunnel.a" \
@@ -199,6 +205,7 @@ $(XCFRAMEWORK_NAME): $(MACOS_DESTDIR)/libvpnfoundation-combined.a $(IOS_DESTDIR)
 
 	# Copy HevSocks5Tunnel header
 	cp "$(HEV_SOCKS5_DIR)/src/hev-main.h" "$(BUILDDIR)/headers-temp/hev-main.h"
+	cp "$(HEV_SOCKS5_DIR)/src/core/include/hev-socks5-log-history.h" "$(BUILDDIR)/headers-temp/hev-socks5-log-history.h"
 
 	# Create unified modulemap with submodules
 	@echo "Creating unified module.modulemap..."
