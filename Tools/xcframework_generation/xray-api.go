@@ -90,6 +90,9 @@ func LibXrayRunXrayFromJSON(datDir, configJSON *C.char) *C.char {
 //
 //export LibXrayStopXray
 func LibXrayStopXray() *C.char {
+	if result, ok := stopManagedXray(); ok {
+		return C.CString(result)
+	}
 	result := libxray.StopXray()
 	return C.CString(result)
 }
@@ -106,7 +109,7 @@ func LibXrayXrayVersion() *C.char {
 //
 //export LibXrayGetXrayState
 func LibXrayGetXrayState() C.int {
-	if libxray.GetXrayState() {
+	if managedXrayRunning() || libxray.GetXrayState() {
 		return 1
 	}
 	return 0
