@@ -26,6 +26,9 @@ extern char *LibXrayCountGeoData(const char *datDir, const char *name, const cha
 extern char *LibXrayReadGeoFiles(const char *data);
 extern int LibXrayConfigureLogHistory(const char *configJSON);
 extern char *LibXraySetCrashOutput(const char *path);
+extern char *LibXrayRunXrayFromJSONManaged(const char *datDir, const char *configJSON, int gcPercent, int memoryLimitMiB, int freeIntervalMs, int maxProcs);
+extern void LibXrayFreeOSMemory(void);
+extern char *LibXrayGoMemStats(void);
 extern char *LibXrayGetLogHistoryState(void);
 
 #endif

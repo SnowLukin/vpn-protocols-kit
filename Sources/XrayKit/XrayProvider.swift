@@ -9,12 +9,19 @@ public protocol XrayProviding: Actor {
 
     func start(config: Data, datDir: String) throws
     func start(config: String, datDir: String) throws
+    /// Starts xray without libXray's forced iOS GC policy and applies `policy`
+    /// before the instance starts.
+    func start(config: String, datDir: String, policy: GoGCPolicy) throws
     func stop() throws
     func configureLogHistory(directory: String?, connectionId: String?, maxSegmentBytes: Int, maxSourceBytes: Int, maxSegments: Int, maxPendingBytes: Int) throws
     nonisolated func logHistoryState() -> String?
 }
 
 public extension XrayProviding {
+    func start(config: String, datDir: String, policy: GoGCPolicy) throws {
+        throw XrayError.callFailed(message: "managed_start_unsupported")
+    }
+
     func start(config: Data) throws {
         try start(config: config, datDir: NSTemporaryDirectory())
     }
@@ -57,6 +64,18 @@ public actor XrayProvider: XrayProviding {
 
     public func start(config: String, datDir: String) throws {
         let result = LibXrayRunXrayFromJSON(datDir, config)
+        let resultString = result.map { String(cString: $0) }
+        try unwrapBase64Response(resultString)
+    }
+
+    public func start(config: String, datDir: String, policy: GoGCPolicy) throws {
+        let result = LibXrayRunXrayFromJSONManaged(
+            datDir, config,
+            Int32(clamping: policy.gcPercent),
+            Int32(clamping: policy.memoryLimitMiB ?? 0),
+            Int32(clamping: policy.freeOSMemoryIntervalMs),
+            Int32(clamping: policy.maxProcs ?? 0)
+        )
         let resultString = result.map { String(cString: $0) }
         try unwrapBase64Response(resultString)
     }
