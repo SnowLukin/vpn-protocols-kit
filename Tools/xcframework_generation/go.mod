@@ -1,6 +1,6 @@
 module github.com/SnowLukin/vpn_protocols-kit
 
-go 1.26.3
+go 1.26.7
 
 require (
 	github.com/amnezia-vpn/amneziawg-go v0.2.17
