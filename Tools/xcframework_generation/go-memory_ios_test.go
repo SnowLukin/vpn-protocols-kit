@@ -11,6 +11,12 @@ import (
 
 // The override only works while libXray applies its policy synchronously
 // inside the start call. A libXray update that moves it elsewhere fails here.
+//
+// With the ios tag a macOS test binary often dies at startup with "non-Go code
+// disabled sigaltstack", even with no tests selected. Run with async
+// preemption off:
+//
+//	GODEBUG=asyncpreemptoff=1 go test -tags ios -run SetGoMemorySettings .
 func TestSetGoMemorySettingsOverridesLibXrayStart(t *testing.T) {
 	restoreGoMemoryDefaults(t)
 	if err := lxray.RunXrayFromJSON(t.TempDir(), `{"outbounds":[{"protocol":"freedom"}]}`); err != nil {
