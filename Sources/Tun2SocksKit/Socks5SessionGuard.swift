@@ -80,11 +80,11 @@ public struct Socks5MemoryProbeConfig: @unchecked Sendable {
 #if os(iOS)
 public extension Socks5MemoryProbeConfig {
     /// Memory left before iOS kills this process. `os_proc_available_memory`
-    /// returns 0 both past the limit and where it does not apply, so 0 is
-    /// reported as unknown and hev keeps its previous state.
+    /// also returns 0 where no limit applies (an iOS app on a Mac), so set this
+    /// probe only in a process that has the limit: there 0 means the process
+    /// is at it and new sessions must be refused.
     static let processAvailableMemory: Socks5MemoryProbe = { _ in
-        let available = os_proc_available_memory()
-        return available > 0 ? Int64(available) : -1
+        Int64(os_proc_available_memory())
     }
 }
 #endif
