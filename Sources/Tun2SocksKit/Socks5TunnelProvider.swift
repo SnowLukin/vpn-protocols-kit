@@ -31,6 +31,9 @@ public protocol Socks5TunnelProviding: Actor {
     ) throws
     func stop() async
     func statistics() -> SocksTunStats
+    nonisolated func relieve(_ types: Socks5SessionTypes, idleMs: Int, maxCount: Int) -> Bool
+    nonisolated func setMemoryProbe(_ config: Socks5MemoryProbeConfig?) -> Bool
+    nonisolated func sessionStats() -> Socks5SessionStats?
 }
 
 public actor Socks5TunnelProvider: Socks5TunnelProviding {
