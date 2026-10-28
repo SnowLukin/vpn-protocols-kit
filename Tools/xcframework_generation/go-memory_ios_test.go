@@ -19,7 +19,7 @@ import (
 //	GODEBUG=asyncpreemptoff=1 go test -tags ios -run SetGoMemorySettings .
 func TestSetGoMemorySettingsOverridesLibXrayStart(t *testing.T) {
 	restoreGoMemoryDefaults(t)
-	if err := lxray.RunXrayFromJSON(t.TempDir(), `{"outbounds":[{"protocol":"freedom"}]}`); err != nil {
+	if err := lxray.RunXrayFromJSON(`{"outbounds":[{"protocol":"freedom"}]}`); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = lxray.StopXray() })
