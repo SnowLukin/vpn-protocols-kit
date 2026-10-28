@@ -123,6 +123,16 @@ public struct Socks5SessionStats: Sendable, Equatable {
     /// Time the memory probe has kept `.hold` and `.closed`.
     public let probeHoldMs: Int
     public let probeClosedMs: Int
+    /// Live sessions in the DNS pool and its size, 0 if the pool is off.
+    public let dnsLive: Int
+    public let dnsCap: Int
+    public let dnsCreated: Int
+    /// Pool sessions closed to make room for a new query.
+    public let dnsEvicted: Int
+    /// Queries that found the pool full of young unanswered sessions.
+    public let dnsRefused: Int
+    /// Part of `dnsRefused` that started as an ordinary UDP session.
+    public let dnsOverflow: Int
 
     init(_ s: HevSocks5TunnelSessionStats) {
         udpLive = Int(s.udp_live)
@@ -147,11 +157,17 @@ public struct Socks5SessionStats: Sendable, Equatable {
         udpQueueDropped = Int(clamping: s.udp_queue_dropped)
         probeHoldMs = Int(clamping: s.probe_hold_ms)
         probeClosedMs = Int(clamping: s.probe_closed_ms)
+        dnsLive = Int(s.dns_live)
+        dnsCap = Int(s.dns_cap)
+        dnsCreated = Int(clamping: s.dns_created)
+        dnsEvicted = Int(clamping: s.dns_evicted)
+        dnsRefused = Int(clamping: s.dns_refused)
+        dnsOverflow = Int(clamping: s.dns_overflow)
     }
 }
 
-/// Caps, eviction and queue limits come from the `misc` block of the hev
-/// config on every start. These calls are safe from any thread, whether or
+/// Caps, eviction, queue limits and the DNS pool come from the `misc` block of
+/// the hev config on every start. These calls are safe from any thread, whether or
 /// not the tunnel is running, so they skip the actor and never wait on `stop()`.
 public extension Socks5TunnelProvider {
     /// Closes matching sessions to give memory back, the tunnel keeps running.
