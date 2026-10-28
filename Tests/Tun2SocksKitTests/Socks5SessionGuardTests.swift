@@ -16,6 +16,8 @@ final class Socks5SessionGuardTests: XCTestCase {
       log-level: error
       udp-max-sessions: 64
       tcp-max-sessions: 80
+      dns-priority-sessions: 16
+      dns-priority-addresses: '1.1.1.1'
     """
 
     private var fds: [Int32] = [-1, -1]
@@ -51,6 +53,7 @@ final class Socks5SessionGuardTests: XCTestCase {
         XCTAssertEqual(stats.admissionUdp, .open)
         XCTAssertEqual(stats.admissionTcp, .open)
         XCTAssertNil(stats.lastProbeKb)
+        XCTAssertEqual(stats.dnsCap, 16)
         let relievedRunning = await provider.relieve([.udp, .tcp])
         XCTAssertTrue(relievedRunning)
 
@@ -107,6 +110,12 @@ final class Socks5SessionGuardTests: XCTestCase {
         raw.udp_queue_dropped = 18
         raw.probe_hold_ms = 19
         raw.probe_closed_ms = 20
+        raw.dns_live = 21
+        raw.dns_cap = 22
+        raw.dns_created = 23
+        raw.dns_evicted = 24
+        raw.dns_refused = 25
+        raw.dns_overflow = 26
 
         let stats = Socks5SessionStats(raw)
 
@@ -118,8 +127,9 @@ final class Socks5SessionGuardTests: XCTestCase {
                 stats.udpRefused, stats.tcpRefused, stats.udpRelieved, stats.tcpRelieved,
                 stats.udpRefusedByAdmission, stats.tcpRefusedByAdmission, stats.udpQueueDropped,
                 stats.probeHoldMs, stats.probeClosedMs,
+                stats.dnsLive, stats.dnsCap, stats.dnsCreated, stats.dnsEvicted, stats.dnsRefused, stats.dnsOverflow,
             ],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+            Array(1...26)
         )
         XCTAssertEqual(stats.admissionUdp, .hold)
         XCTAssertEqual(stats.admissionTcp, .closed)

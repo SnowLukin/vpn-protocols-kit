@@ -172,8 +172,8 @@ public actor Socks5TunnelProvider: Socks5TunnelProviding {
         hev_socks5_tunnel_relieve(types.rawValue, Int32(clamping: idleMs), Int32(clamping: maxCount)) == 0
     }
 
-    /// Caps, eviction and queue limits come from the `misc` block of the config
-    /// on every start; the probe is set apart and outlives tunnel restarts.
+    /// Caps, eviction, queue limits and the DNS pool come from the `misc` block
+    /// of the config on every start; the probe is set apart and outlives tunnel restarts.
     /// nil turns the probe off and lets it act on both kinds again.
     /// Returns false for thresholds hev rejects.
     public func setMemoryProbe(_ config: Socks5MemoryProbeConfig?) -> Bool {
