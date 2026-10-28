@@ -28,42 +28,48 @@ final class Socks5SessionGuardTests: XCTestCase {
         provider = Socks5TunnelProvider(resolveTunnelFileDescriptor: { fd })
     }
 
-    override func tearDown() {
-        _ = provider.setMemoryProbe(nil)
+    override func tearDown() async throws {
+        _ = await provider.setMemoryProbe(nil)
         fds.forEach { close($0) }
         provider = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
-    func testRelieveWithoutRunningTunnelFails() {
-        XCTAssertFalse(provider.relieve(.udp, idleMs: 0, maxCount: 0))
+    func testRelieveWithoutRunningTunnelFails() async {
+        let relieved = await provider.relieve(.udp)
+        XCTAssertFalse(relieved)
     }
 
     func testRunningTunnelReportsCapsFromConfigAndRelieves() async throws {
         try await provider.start(with: .string(content: Self.guardedConfig)) { _ in }
         try await Task.sleep(nanoseconds: 300_000_000)
 
-        let stats = try XCTUnwrap(provider.sessionStats())
+        let runningStats = await provider.sessionStats()
+        let stats = try XCTUnwrap(runningStats)
         XCTAssertEqual(stats.udpCap, 64)
         XCTAssertEqual(stats.tcpCap, 80)
         XCTAssertEqual(stats.admissionUdp, .open)
         XCTAssertEqual(stats.admissionTcp, .open)
         XCTAssertNil(stats.lastProbeKb)
-        XCTAssertTrue(provider.relieve([.udp, .tcp], idleMs: 0, maxCount: 0))
+        let relievedRunning = await provider.relieve([.udp, .tcp])
+        XCTAssertTrue(relievedRunning)
 
         await provider.stop()
-        XCTAssertFalse(provider.relieve(.udp, idleMs: 0, maxCount: 0))
-        XCTAssertNil(provider.sessionStats())
+        let relievedStopped = await provider.relieve(.udp)
+        let statsStopped = await provider.sessionStats()
+        XCTAssertFalse(relievedStopped)
+        XCTAssertNil(statsStopped)
     }
 
-    func testMemoryProbeRejectsSwappedThresholds() {
+    func testMemoryProbeRejectsSwappedThresholds() async {
         let swapped = Socks5MemoryProbeConfig(
             probe: { _ in 0 },
             holdBelowKb: 8 * 1024,
             closeBelowKb: 12 * 1024,
             hysteresisKb: 0
         )
-        XCTAssertFalse(provider.setMemoryProbe(swapped))
+        let swappedAccepted = await provider.setMemoryProbe(swapped)
+        XCTAssertFalse(swappedAccepted)
 
         let valid = Socks5MemoryProbeConfig(
             probe: { _ in 0 },
@@ -71,8 +77,10 @@ final class Socks5SessionGuardTests: XCTestCase {
             closeBelowKb: 8 * 1024,
             hysteresisKb: 2 * 1024
         )
-        XCTAssertTrue(provider.setMemoryProbe(valid))
-        XCTAssertTrue(provider.setMemoryProbe(nil))
+        let validAccepted = await provider.setMemoryProbe(valid)
+        let offAccepted = await provider.setMemoryProbe(nil)
+        XCTAssertTrue(validAccepted)
+        XCTAssertTrue(offAccepted)
     }
 
     func testStatsMapEveryField() {

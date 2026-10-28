@@ -31,9 +31,9 @@ public protocol Socks5TunnelProviding: Actor {
     ) throws
     func stop() async
     func statistics() -> SocksTunStats
-    nonisolated func relieve(_ types: Socks5SessionTypes, idleMs: Int, maxCount: Int) -> Bool
-    nonisolated func setMemoryProbe(_ config: Socks5MemoryProbeConfig?) -> Bool
-    nonisolated func sessionStats() -> Socks5SessionStats?
+    func relieve(_ types: Socks5SessionTypes, idleMs: Int, maxCount: Int) -> Bool
+    func setMemoryProbe(_ config: Socks5MemoryProbeConfig?) -> Bool
+    func sessionStats() -> Socks5SessionStats?
 }
 
 public actor Socks5TunnelProvider: Socks5TunnelProviding {
@@ -163,6 +163,47 @@ public actor Socks5TunnelProvider: Socks5TunnelProviding {
             up: SocksTunStats.Stat(packets: tPackets, bytes: tBytes),
             down: SocksTunStats.Stat(packets: rPackets, bytes: rBytes)
         )
+    }
+
+    /// Closes matching sessions to give memory back, the tunnel keeps running.
+    /// `idleMs` 0 closes regardless of activity, `maxCount` 0 means no limit.
+    /// Returns false when the tunnel is not running.
+    public func relieve(_ types: Socks5SessionTypes, idleMs: Int = 0, maxCount: Int = 0) -> Bool {
+        hev_socks5_tunnel_relieve(types.rawValue, Int32(clamping: idleMs), Int32(clamping: maxCount)) == 0
+    }
+
+    /// Caps, eviction and queue limits come from the `misc` block of the config
+    /// on every start; the probe is set apart and outlives tunnel restarts.
+    /// nil turns the probe off and lets it act on both kinds again.
+    /// Returns false for thresholds hev rejects.
+    public func setMemoryProbe(_ config: Socks5MemoryProbeConfig?) -> Bool {
+        guard let config else {
+            hev_socks5_tunnel_set_memory_probe(nil, nil, 0, 0, 0, 0, 0, 0)
+            let all = Socks5SessionTypes([.udp, .tcp]).rawValue
+            return hev_socks5_tunnel_set_memory_probe_types(all, all) == 0
+        }
+        let accepted = hev_socks5_tunnel_set_memory_probe(
+            config.probe,
+            nil,
+            Int32(clamping: config.intervalMs),
+            Int32(clamping: config.holdBelowKb),
+            Int32(clamping: config.closeBelowKb),
+            Int32(clamping: config.hysteresisKb),
+            Int32(clamping: config.youngMs),
+            Int32(clamping: config.youngReserveKb)
+        ) == 0
+        guard accepted else { return false }
+        return hev_socks5_tunnel_set_memory_probe_types(config.holdTypes.rawValue, config.closeTypes.rawValue) == 0
+    }
+
+    /// nil when the tunnel is not running.
+    public func sessionStats() -> Socks5SessionStats? {
+        var stats = HevSocks5TunnelSessionStats()
+        stats.size = UInt32(MemoryLayout<HevSocks5TunnelSessionStats>.stride)
+        guard hev_socks5_tunnel_get_session_stats(&stats) == 0 else {
+            return nil
+        }
+        return Socks5SessionStats(stats)
     }
 
     private nonisolated static func withNullableCString<Result>(
