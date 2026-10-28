@@ -40,8 +40,8 @@ let package = Package(
         // Remote usage
        .binaryTarget(
           name: "VpnFoundation",
-          url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/2.4.0-beta.6/VpnFoundation.xcframework.zip",
-          checksum: "fa6a35c9d35392f3864d2ac5f6a7ba4d007f40429990f6b27ec8fdef06d5a870"
+          url: "https://github.com/SnowLukin/vpn-protocols-kit/releases/download/2.4.0-beta.8/VpnFoundation.xcframework.zip",
+          checksum: "6188fdd9bf4f743e4e6809631f9eba7734d7dacc1522814874c716deefa96519"
        )
 
         // Local usage
