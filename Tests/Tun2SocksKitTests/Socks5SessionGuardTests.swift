@@ -53,6 +53,7 @@ final class Socks5SessionGuardTests: XCTestCase {
 
         await provider.stop()
         XCTAssertFalse(provider.relieve(.udp, idleMs: 0, maxCount: 0))
+        XCTAssertNil(provider.sessionStats())
     }
 
     func testMemoryProbeRejectsSwappedThresholds() {
