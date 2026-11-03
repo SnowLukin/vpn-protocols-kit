@@ -76,7 +76,7 @@ func callResponse(err error) string {
 
 func runXrayFromJSON(datDir, configJSON string) string {
 	setAssetDir(datDir)
-	return callResponse(xray.RunXrayFromJSON(configJSON))
+	return callResponse(xray.RunXray(configJSON))
 }
 
 // Run Xray instance with JSON configuration.
