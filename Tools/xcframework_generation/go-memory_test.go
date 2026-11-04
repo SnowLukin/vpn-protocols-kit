@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"runtime"
 	"runtime/debug"
 	"testing"
 )
@@ -47,5 +48,20 @@ func TestSetGoMemorySettingsKeepsCollectorOn(t *testing.T) {
 
 	if gc, _ := currentGoMemorySettings(); gc != minGCPercent {
 		t.Fatalf("got GOGC %d", gc)
+	}
+}
+
+func TestSetGoMaxProcsLimitsAndRestoresDefault(t *testing.T) {
+	defaultProcs := runtime.GOMAXPROCS(0)
+	t.Cleanup(func() { runtime.GOMAXPROCS(defaultProcs) })
+
+	setGoMaxProcs(1)
+	if got := runtime.GOMAXPROCS(0); got != 1 {
+		t.Fatalf("got GOMAXPROCS %d", got)
+	}
+
+	setGoMaxProcs(0)
+	if got := runtime.GOMAXPROCS(0); got != defaultProcs {
+		t.Fatalf("got GOMAXPROCS %d, want default %d", got, defaultProcs)
 	}
 }

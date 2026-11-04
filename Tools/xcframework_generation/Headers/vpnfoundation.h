@@ -27,6 +27,9 @@ extern char *LibXrayReadGeoFiles(const char *data);
 extern int LibXrayConfigureLogHistory(const char *configJSON);
 extern char *LibXraySetCrashOutput(const char *path);
 extern void LibXraySetGoMemorySettings(int gcPercent, int memoryLimitMiB);
+extern void LibXraySetFreeOSMemoryInterval(int seconds);
+extern void LibXrayFreeOSMemory(void);
+extern void LibXraySetGoMaxProcs(int n);
 extern char *LibXrayGetLogHistoryState(void);
 
 #endif
