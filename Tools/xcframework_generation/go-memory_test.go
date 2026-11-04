@@ -52,8 +52,10 @@ func TestSetGoMemorySettingsKeepsCollectorOn(t *testing.T) {
 }
 
 func TestSetGoMaxProcsLimitsAndRestoresDefault(t *testing.T) {
+	initialProcs := runtime.GOMAXPROCS(0)
+	t.Cleanup(func() { runtime.GOMAXPROCS(initialProcs) })
+	runtime.SetDefaultGOMAXPROCS()
 	defaultProcs := runtime.GOMAXPROCS(0)
-	t.Cleanup(func() { runtime.GOMAXPROCS(defaultProcs) })
 
 	setGoMaxProcs(1)
 	if got := runtime.GOMAXPROCS(0); got != 1 {
