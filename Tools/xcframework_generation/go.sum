@@ -1,7 +1,7 @@
 github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261104085729-10695c0f6cde h1:GZrvfIWT2eCQmIh59h5icefgbXjRXmETWYcldz2gTV8=
 github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261104085729-10695c0f6cde/go.mod h1:3z2e05kEk+Ftif4Fx0UnYrzTfkP21pVQLdixXqpu2Q4=
-github.com/SnowLukin/libXray v1.260909.1-0.20261104045911-0af075b3ede9 h1:eBJ/+YzSe1kjSpzeeu9TAuPMAMX1vBzYQmI3eEKmKrA=
-github.com/SnowLukin/libXray v1.260909.1-0.20261104045911-0af075b3ede9/go.mod h1:rYzpdR+diZir3h2r+I19X1jCE+fXmHoIxbdqR2yTy1s=
+github.com/SnowLukin/libXray v1.260909.1-0.20261104115152-5d4815ed89e8 h1:s00Aa3bScJong8UUBnRor0YZr3KTTG23JS8fUMRCi7s=
+github.com/SnowLukin/libXray v1.260909.1-0.20261104115152-5d4815ed89e8/go.mod h1:z79gnDsuQyBrV9EWwQf3Al6Gli1VxOijnjmb6vSPZi0=
 github.com/amnezia-vpn/amneziawg-go v0.2.17 h1:lZHaBPoG67ozZybGGRDogw8Q+Yf2jyCXfWgUy7lpeXA=
 github.com/amnezia-vpn/amneziawg-go v0.2.17/go.mod h1:aMgOk9MuX0xI7b5TKAYp8pLM54RlXcOPzDvYw3YEO5A=
 github.com/amnezia-vpn/amneziawg-go/v3 v3.1.20260828 h1:D8d8gGvwXcTxUIsE4z6F6vjy4/VZddu95vMNtOygh1c=
