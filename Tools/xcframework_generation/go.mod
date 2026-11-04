@@ -58,6 +58,6 @@ require (
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
 
-replace github.com/xtls/libxray => github.com/xtls/libxray v1.261031.0
+replace github.com/xtls/libxray => github.com/SnowLukin/libXray v1.260909.1-0.20261104040840-af2a62717a40
 
 replace github.com/xtls/xray-core => github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261103200842-91ca6f7d51d8

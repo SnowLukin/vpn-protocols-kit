@@ -1,5 +1,7 @@
 github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261103200842-91ca6f7d51d8 h1:1gLdmkegPK+ehifiXQk9/d4GfSbQHrP+yWxE5Q//Gl0=
 github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261103200842-91ca6f7d51d8/go.mod h1:3z2e05kEk+Ftif4Fx0UnYrzTfkP21pVQLdixXqpu2Q4=
+github.com/SnowLukin/libXray v1.260909.1-0.20261104040840-af2a62717a40 h1:mRtSHKbRMYkTE5VWgq0eYId39E2L2QCKwlkpQYw+KnE=
+github.com/SnowLukin/libXray v1.260909.1-0.20261104040840-af2a62717a40/go.mod h1:rYzpdR+diZir3h2r+I19X1jCE+fXmHoIxbdqR2yTy1s=
 github.com/amnezia-vpn/amneziawg-go v0.2.17 h1:lZHaBPoG67ozZybGGRDogw8Q+Yf2jyCXfWgUy7lpeXA=
 github.com/amnezia-vpn/amneziawg-go v0.2.17/go.mod h1:aMgOk9MuX0xI7b5TKAYp8pLM54RlXcOPzDvYw3YEO5A=
 github.com/amnezia-vpn/amneziawg-go/v3 v3.1.20260828 h1:D8d8gGvwXcTxUIsE4z6F6vjy4/VZddu95vMNtOygh1c=
@@ -78,8 +80,6 @@ github.com/vishvananda/netns v0.0.5 h1:DfiHV+j8bA32MFM7bfEunvT8IAqQ/NzSJHtcmW5zd
 github.com/vishvananda/netns v0.0.5/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
 github.com/wlynxg/anet v0.0.5 h1:J3VJGi1gvo0JwZ/P1/Yc/8p63SoW98B5dHkYDmpgvvU=
 github.com/wlynxg/anet v0.0.5/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
-github.com/xtls/libxray v1.261031.0 h1:0+AbJ10x9LXwqTgfId0grUQDHs4xXEIkXLIkobmt/ng=
-github.com/xtls/libxray v1.261031.0/go.mod h1:y784KetokGQgNyWKIJqXiOP5xtF8HE50cIN+6tcfmQE=
 github.com/xtls/reality v0.0.0-20261014101318-83f621788ca8 h1:RjLnVvlzK4q6zWaSBPNRGsrgx2fbJDeUWffjw574uzs=
 github.com/xtls/reality v0.0.0-20261014101318-83f621788ca8/go.mod h1:ptlSkJ8k/7IDauNH0SA96JPOo+nYGLTv2Y3UMpwvAsY=
 github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZqKjWU=
