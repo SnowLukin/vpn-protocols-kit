@@ -60,4 +60,4 @@ require (
 
 replace github.com/xtls/libxray => github.com/xtls/libxray v1.261031.0
 
-replace github.com/xtls/xray-core => github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261103200842-91ca6f7d51d8
+replace github.com/xtls/xray-core => github.com/SnowLukin/amnezia-xray-core v1.260724.1-0.20261104085729-10695c0f6cde
