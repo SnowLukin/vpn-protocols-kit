@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build-and-release:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     env:
@@ -131,7 +131,10 @@ jobs:
 
       - name: Create release with xcframework asset
         run: |
-          gh release create "$VERSION" \
+          # a version with a suffix (2.5.2-beta.1) is a pre-release, so it does not become the latest one
+          PRERELEASE=""
+          case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
+          gh release create "$VERSION" $PRERELEASE \
             --repo "${{ github.repository }}" \
             --target "$RELEASE_SHA" \
             --title "$VERSION" \
